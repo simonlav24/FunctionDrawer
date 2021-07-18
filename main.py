@@ -150,18 +150,10 @@ handles = []
 movedObj = None
 mouseMode = HAND
 currentMenu = None
-currentDialog = None
+focusedHandle = None
 
 l = Linear()
 handles += l.handles
-
-# ha = Handle((10,12))
-# ha.active = True
-# ha2 = Handle((20,12))
-# ha2.active = True
-
-# d = Dialog("this is a doalog window that will be made soon", [("Cancel", test_t), ("Ok", test_t)])
-# currentDialog = d
 
 def step():
 	for h in handles:
@@ -170,7 +162,6 @@ def step():
 		else:
 			h.selected = False
 	if currentMenu: currentMenu.step()
-	if currentDialog: currentDialog.step()
 	
 def draw():
 	for h in handles:
@@ -178,10 +169,9 @@ def draw():
 	for func in Func._reg:
 		func.draw()
 	if currentMenu: currentMenu.draw()
-	if currentDialog: currentDialog.draw()
 
 def eventHandler(events):
-	global mouseMode, movedObj, currentMenu, currentDialog
+	global mouseMode, movedObj, currentMenu, focusedHandle
 	for event in events:
 		if event.type == pygame.QUIT:
 			globalvars.run = False
@@ -197,11 +187,17 @@ def eventHandler(events):
 						movedObj = h
 			globalvars.camPrev = Vector(globalvars.cam[0], globalvars.cam[1])
 			# menus:
+			menuDone = True
 			if currentMenu:
-				currentMenu.pressButton()
-			currentMenu = None
-			if currentDialog:
-				currentDialog.pressButton()
+				menuDone = currentMenu.pressButton()
+				if menuDone:
+					if currentMenu.name == "menuEditHandle":
+						if currentMenu.valueDict["x: "]:
+							focusedHandle.pos.x = float(currentMenu.valueDict["x: "])
+						if currentMenu.valueDict["y: "]:
+							focusedHandle.pos.y = float(currentMenu.valueDict["y: "])
+						focusedHandle = None
+					currentMenu = None
 				
 			
 		# mouse right click
@@ -210,15 +206,20 @@ def eventHandler(events):
 			# edit handles:
 			for h in handles:
 				if h.active and squareCollision(h.pos - Vector(5,5)/globalvars.scaleFactor, parami(pygame.mouse.get_pos()), 5/globalvars.scaleFactor , 1/globalvars.scaleFactor):
-					mouseMode = DIALOG
-					d = Dialog("this is a doalog window that will be made soon", [("Cancel", cancel), ("Ok", test_t)], ["x", "y"])
-					currentDialog = d
+					# mouseMode = DIALOG
 					clickEvent = EDIT_HANDLE
+					focusedHandle = h
 			# menus:
 			if clickEvent == MENU_CALL:
-				m = Menu(pygame.mouse.get_pos())
-				m.addButton("Add Line", (255,255,255), True, addLine)
+				m = Menu("menuAdd", pygame.mouse.get_pos())
+				m.addWidget(Button, ["Add Line", (255,255,255), True, addLine])
 				currentMenu = m
+			if clickEvent == EDIT_HANDLE:
+				m = Menu("menuEditHandle", pygame.mouse.get_pos())
+				m.addWidget(Input, ["x: ", 200, (255,255,255)])
+				m.addWidget(Input, ["y: ", 200, (255,255,255)])
+				currentMenu = m
+				
 			
 		# mouse left release
 		if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
@@ -250,6 +251,8 @@ def eventHandler(events):
 				mouseMode = HAND
 			if event.key == pygame.K_1:
 				mouseMode = 1
+			# print(event.key)
+			if currentMenu: InputListen(currentMenu, event)
 				
 	keys = pygame.key.get_pressed()
 	if keys[pygame.K_ESCAPE]:
@@ -262,5 +265,7 @@ def eventHandler(events):
 			globalvars.cam = globalvars.camPrev + (globalvars.point - current) * globalvars.scaleFactor
 		elif mouseMode == MOVE:
 			movedObj.pos = parami(pygame.mouse.get_pos())
+	
+	
 	
 mainLoop(step, draw, eventHandler)
