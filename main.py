@@ -102,14 +102,56 @@ class Parabole(Func):
 		return string
 
 class SemiCircle(Func):
+	def initialize(self):
+		self.handles[0].pos = Vector(0,0)
+		self.handles[1].pos = Vector(10, -10)
+
 	def func(self, x):
-		a = self.p1[0]; b = self.p1[1]; c = self.p2[0]; d = self.p2[1]
-		if c-a == 0:
-			return 0
-		if 1-((x-c)/(c-a))**2 < 0:
-			return 0
-		return (d-b)*sqrt(1-((x-c)/(c-a))**2)+b
+		if self.handles[0].pos.x < self.handles[1].pos.x:
+			self.b1 = self.handles[1].pos.x
+			self.b0 = self.handles[0].pos.x - abs(self.handles[0].pos.x - self.handles[1].pos.x)
+		else:
+			self.b0 = self.handles[1].pos.x
+			self.b1 = self.handles[0].pos.x + abs(self.handles[0].pos.x - self.handles[1].pos.x)
+			
+		a = self.handles[0].pos.y - self.handles[1].pos.y
+		if self.handles[1].pos.x - self.handles[0].pos.x == 0:
+			return self.handles[1].pos.y
+		c = 1/(self.handles[1].pos.x - self.handles[0].pos.x)**2
+		s = 1 - c * (x - self.handles[0].pos.x)**2
+		if s < 0:
+			return self.handles[1].pos.y
+		return a * sqrt(s) + self.handles[1].pos.y
+		
 	def __str__(self):
+		### not right
+		a = self.p1[0]; b = self.p1[1]; c = self.p2[0]; d = self.p2[1]
+		
+		string = formet((d-b)/(c-a)) + "\\sqrt{" + formet((c-a)**2) + "-\\left(x-" + formet(c) + "\\right)^{2}}+" + formet(b)
+		borders = [self.b0, self.b1]
+		borders.sort()
+		string += "\\left\\{" + formet(borders[0]) + "<x<" + formet(borders[1]) + "\\right\\}"
+		return string
+	# def draw(self):
+		# pos = (min(self.handles[0].pos.x, self.handles[1].pos.x), max(self.handles[0].pos.y, self.handles[1].pos.y))
+		# size = Vector(abs(self.handles[0].pos.x - self.handles[1].pos.x) * 2, abs(self.handles[0].pos.y - self.handles[1].pos.y) * 2) * globalvars.scaleFactor
+		# pygame.draw.arc(win, (0,0,255), (param(pos), size), 0, pi, 2)
+		
+class Sinus(Func):
+	def initialize(self):
+		self.handles[0].pos = Vector(0,0)
+		self.handles[1].pos = Vector(10, 10)
+
+	def func(self, x):
+		a = self.handles[1].pos.y - self.handles[0].pos.y
+		delim = (2 * (self.handles[1].pos.x - self.handles[0].pos.x)) 
+		if delim == 0:
+			return self.handles[0].pos.y
+		c = pi / delim
+		return a * sin(c * (x - self.handles[0].pos.x)) + self.handles[0].pos.y
+		
+	def __str__(self):
+		### not right
 		a = self.p1[0]; b = self.p1[1]; c = self.p2[0]; d = self.p2[1]
 		
 		string = formet((d-b)/(c-a)) + "\\sqrt{" + formet((c-a)**2) + "-\\left(x-" + formet(c) + "\\right)^{2}}+" + formet(b)
@@ -146,11 +188,20 @@ def addParabole():
 	currentFunc = Parabole()
 	currentFunc.active = True
 	handles = currentFunc.handles
+	
+def addSemi():
+	global handles, currentFunc
+	funcDiactivate()
+	currentFunc = SemiCircle()
+	currentFunc.active = True
+	handles = currentFunc.handles
 
-def cancel():
-	global currentDialog, mouseMode
-	currentDialog = None
-	mouseMode = HAND
+def addSin():
+	global handles, currentFunc
+	funcDiactivate()
+	currentFunc = Sinus()
+	currentFunc.active = True
+	handles = currentFunc.handles
 	
 def switchFunc(switched):
 	global handles, currentFunc
@@ -232,6 +283,8 @@ def eventHandler(events):
 				m = Menu("menuAdd", pygame.mouse.get_pos())
 				m.addWidget(Button, ["Add Line", (255,255,255), True, addLine])
 				m.addWidget(Button, ["Add Parabole", (255,255,255), True, addParabole])
+				m.addWidget(Button, ["Add SemiCircle", (255,255,255), True, addSemi])
+				m.addWidget(Button, ["Add Sinusoid", (255,255,255), True, addSin])
 				currentMenu = m
 			if clickEvent == EDIT_HANDLE:
 				m = Menu("menuEditHandle", pygame.mouse.get_pos())
