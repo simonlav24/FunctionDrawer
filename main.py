@@ -26,12 +26,13 @@ class Func:
 	_reg = []
 	def __init__(self):
 		Func._reg.append(self)
-		self.p1 = Vector()
-		self.p2 = Vector()
 		self.b0 = -50
 		self.b1 = 50
 		self.active = True
 		self.handles = [Handle((-10,0)), Handle((10,0))]
+		self.initialize()
+	def initialize(self):
+		pass
 	def func(self, x):
 		return x
 	def draw(self):
@@ -73,16 +74,21 @@ class Linear(Func):
 		return string
 		
 	def draw(self):
-		pygame.draw.line(win, (255,10,10), param(self.handles[0].pos), param(self.handles[1].pos))
+		pygame.draw.line(win, (255,10,10), param(self.handles[0].pos), param(self.handles[1].pos), 2)
 
 class Parabole(Func):
+	def initialize(self):
+		self.handles[0].pos = Vector(0,0)
+		self.handles[1].pos = Vector(10, -10)
 	def func(self, x):
-		if self.p1[0] - self.p2[0] == 0:
+		delim = (self.handles[0].pos.x - self.handles[1].pos.x)**2
+		if delim == 0:
 			return 0
-		h = (self.p2[1] - self.p1[1])/((self.p1[0] - self.p2[0])**2)
-		return h * (x - self.p2[0]) * (x + self.p2[0] - 2*self.p1[0]) + self.p2[1]
+		a = (self.handles[0].pos.y - self.handles[1].pos.y)/delim
+		return a * (x - self.handles[1].pos.x)**2 + self.handles[1].pos.y
 		
 	def __str__(self):
+		### not right
 		a = self.p1[0]; b = self.p1[1]; c = self.p2[0]; d = self.p2[1]
 		h = (d-b)/(a-c)**2
 		i = -2*h*a
@@ -126,20 +132,34 @@ menuSetFont(myfont)
 def test_t():
 	print("click")
 	
-def addLine(self):
-	global handles
+def addLine():
+	global handles, currentFunc
 	funcDiactivate()
-	l = Linear()
-	l.active = True
-	handles += l.handles
+	currentFunc = Linear()
+	currentFunc.active = True
+	currentFunc = currentFunc
+	handles = currentFunc.handles
+	
+def addParabole():
+	global handles, currentFunc
+	funcDiactivate()
+	currentFunc = Parabole()
+	currentFunc.active = True
+	handles = currentFunc.handles
 
 def cancel():
 	global currentDialog, mouseMode
 	currentDialog = None
 	mouseMode = HAND
-
-def changeHandleValues():
-	pass
+	
+def switchFunc(switched):
+	global handles, currentFunc
+	for h in handles:
+		h.active = False
+	currentFunc = Func._reg[switched]
+	for h in currentFunc.handles:
+		h.active = True
+	handles = currentFunc.handles
 
 ################################################################################ Setup
 HAND = 0
@@ -150,10 +170,8 @@ handles = []
 movedObj = None
 mouseMode = HAND
 currentMenu = None
+currentFunc = None
 focusedHandle = None
-
-l = Linear()
-handles += l.handles
 
 def step():
 	for h in handles:
@@ -213,6 +231,7 @@ def eventHandler(events):
 			if clickEvent == MENU_CALL:
 				m = Menu("menuAdd", pygame.mouse.get_pos())
 				m.addWidget(Button, ["Add Line", (255,255,255), True, addLine])
+				m.addWidget(Button, ["Add Parabole", (255,255,255), True, addParabole])
 				currentMenu = m
 			if clickEvent == EDIT_HANDLE:
 				m = Menu("menuEditHandle", pygame.mouse.get_pos())
@@ -251,7 +270,16 @@ def eventHandler(events):
 				mouseMode = HAND
 			if event.key == pygame.K_1:
 				mouseMode = 1
-			# print(event.key)
+			if event.key == pygame.K_DOWN:
+				if currentFunc:
+					index = Func._reg.index(currentFunc)
+					index = (index - 1) % len(Func._reg)
+					switchFunc(index)
+			if event.key == pygame.K_UP:
+				if currentFunc:
+					index = Func._reg.index(currentFunc)
+					index = (index + 1) % len(Func._reg)
+					switchFunc(index)
 			if currentMenu: InputListen(currentMenu, event)
 				
 	keys = pygame.key.get_pressed()

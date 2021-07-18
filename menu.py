@@ -20,11 +20,6 @@ def InputListen(menu, event):
 		menu.focusedWidget.string += event.unicode
 		if event.key == pygame.K_RETURN:
 			menu.focusedWidget = None
-			
-# def switchFocused(menu, switched):
-	# if menu.focusedWidget:
-		# menu.valueDict[menu.focusedWidget.key] = menu.focusedWidget.string
-	# menu.focusedWidget = switched
 
 
 class Dialog:
@@ -87,7 +82,7 @@ class Dialog:
 
 
 class Menu:
-	menus = []
+	# menus = []
 	border = 1
 	textColor = BLACK
 	TextColorInnactive = (170,170,170)
@@ -135,7 +130,6 @@ class Menu:
 		for e in self.elements:
 			e.draw()
 	def destroy(self):
-		# Menu.menus.remove(self)
 		pass
 	def pressButton(self):
 		done = True
@@ -208,7 +202,7 @@ class Button:
 		self.action = action
 		self.focused = False
 	def activate(self):
-		self.action(self)
+		self.action()
 		return True
 	def step(self):
 		mousePos = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
