@@ -1,16 +1,13 @@
 from math import fabs, sqrt, cos, sin, pi, floor, ceil, e
 from random import uniform, randint, choice
 import os, pygame
-if os.path.exists("graph.py"):
-	import graph
-else:
+if not os.path.exists("graph.py"):
 	print("fetching graph")
 	import urllib.request
 	with urllib.request.urlopen('https://raw.githubusercontent.com/simonlav24/Graph-plotter/master/graph.py') as f:
 		text = f.read().decode('utf-8')
 		with open("graph.py", "w+") as graphpy:
 			graphpy.write(text)
-	import graph
 from graph import *
 from menu import *
 
